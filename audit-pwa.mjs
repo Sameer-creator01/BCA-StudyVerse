@@ -1,0 +1,14 @@
+import fs from 'node:fs';
+import assert from 'node:assert/strict';
+const manifest = JSON.parse(fs.readFileSync('manifest.webmanifest', 'utf8'));
+assert.equal(manifest.display, 'standalone');
+assert.ok(manifest.name && manifest.start_url && manifest.scope);
+for (const icon of manifest.icons) assert.ok(fs.existsSync(icon.src), `Missing icon: ${icon.src}`);
+for (const file of ['tsconfig.json','vite.config.ts','tailwind.config.js','postcss.config.js','src/index.css','sw.js','api/ai-teacher.ts','supabase/schema.sql']) assert.ok(fs.existsSync(file), `Missing ${file}`);
+const css = fs.readFileSync('src/index.css','utf8');
+assert.ok(css.includes('@tailwind base') && css.includes('@tailwind utilities'));
+const sw = fs.readFileSync('sw.js','utf8');
+assert.ok(sw.includes('skipWaiting') && sw.includes('clients.claim') && sw.includes('supabase|googleapis|openai'));
+const sql = fs.readFileSync('supabase/schema.sql','utf8');
+assert.ok(sql.includes('auth.uid() = user_id') && !/using\s*\(true\)|with check\s*\(true\)/i.test(sql));
+console.log('PWA static audit passed: manifest, icons, configs, CSS, service worker, secure RLS schema.');
